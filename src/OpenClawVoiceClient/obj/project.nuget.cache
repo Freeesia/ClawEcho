@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "yCXAemBUZ80=",
+  "dgSpecHash": "RpZrc6wVOwU=",
   "success": true,
   "projectFilePath": "/home/runner/work/ClawEcho/ClawEcho/src/OpenClawVoiceClient/OpenClawVoiceClient.csproj",
   "expectedPackageFiles": [
@@ -23,6 +23,7 @@
     "/home/runner/.nuget/packages/microsoft.extensions.hosting/10.0.0/microsoft.extensions.hosting.10.0.0.nupkg.sha512",
     "/home/runner/.nuget/packages/microsoft.extensions.hosting.abstractions/10.0.0/microsoft.extensions.hosting.abstractions.10.0.0.nupkg.sha512",
     "/home/runner/.nuget/packages/microsoft.extensions.hosting.systemd/10.0.0/microsoft.extensions.hosting.systemd.10.0.0.nupkg.sha512",
+    "/home/runner/.nuget/packages/microsoft.extensions.http/10.0.0/microsoft.extensions.http.10.0.0.nupkg.sha512",
     "/home/runner/.nuget/packages/microsoft.extensions.logging/10.0.0/microsoft.extensions.logging.10.0.0.nupkg.sha512",
     "/home/runner/.nuget/packages/microsoft.extensions.logging.abstractions/10.0.0/microsoft.extensions.logging.abstractions.10.0.0.nupkg.sha512",
     "/home/runner/.nuget/packages/microsoft.extensions.logging.configuration/10.0.0/microsoft.extensions.logging.configuration.10.0.0.nupkg.sha512",
