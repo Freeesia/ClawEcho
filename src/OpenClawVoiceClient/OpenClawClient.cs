@@ -8,7 +8,7 @@ using Microsoft.Extensions.Options;
 namespace OpenClawVoiceClient;
 
 /// <summary>
-/// Client for OpenClaw's /v1/responses endpoint.
+/// OpenClaw の /v1/responses エンドポイント クライアント。
 /// </summary>
 public sealed class OpenClawClient(HttpClient http, IOptions<AppOptions> options, ILogger<OpenClawClient> logger)
 {
@@ -16,11 +16,11 @@ public sealed class OpenClawClient(HttpClient http, IOptions<AppOptions> options
     private readonly AppOptions _options = options.Value;
     private readonly ILogger<OpenClawClient> _logger = logger;
 
-    // Simple conversation history stored as a list of messages
+    // 会話履歴をメッセージリストとして保持
     private readonly List<RequestMessage> _history = [];
 
     /// <summary>
-    /// Sends the user's text to OpenClaw and returns the assistant's response text.
+    /// ユーザーのテキストをOpenClawに送信し、アシスタントの応答テキストを返す。
     /// </summary>
     public async Task<string> AskAsync(string userText, CancellationToken ct = default)
     {
@@ -63,12 +63,12 @@ public sealed class OpenClawClient(HttpClient http, IOptions<AppOptions> options
     }
 
     /// <summary>
-    /// Clears conversation history.
+    /// 会話履歴をクリアする。
     /// </summary>
     public void ClearHistory() => _history.Clear();
 }
 
-// ---- JSON models ----
+// ---- JSONモデル ----
 
 internal sealed record RequestMessage(
     [property: JsonPropertyName("role")] string Role,

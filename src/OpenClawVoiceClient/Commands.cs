@@ -5,8 +5,8 @@ using Microsoft.Extensions.Logging;
 namespace OpenClawVoiceClient;
 
 /// <summary>
-/// CLI commands for OpenClawVoiceClient.
-/// Provides daemon (continuous) and oneshot (single-task) modes.
+/// OpenClawVoiceClient の CLIコマンド定義。
+/// デーモン（継続）モードとワンショット（単発）モードを提供する。
 /// </summary>
 public sealed class Commands(
     DaemonWorker daemon,
@@ -19,7 +19,7 @@ public sealed class Commands(
     ILogger<Commands> logger)
 {
     /// <summary>
-    /// Starts the daemon: waits for wake word, runs a voice session, repeats until stopped.
+    /// デーモンを開始する。ウェイクワード待機 → 音声セッション実行のループを停止まで繰り返す。
     /// </summary>
     [Command("daemon")]
     public async Task DaemonAsync(CancellationToken cancellationToken)
@@ -33,7 +33,7 @@ public sealed class Commands(
         }
         catch (OperationCanceledException)
         {
-            // Normal shutdown via Ctrl+C or SIGTERM
+            // Ctrl+C または SIGTERM による正常シャットダウン
         }
         finally
         {
@@ -42,7 +42,7 @@ public sealed class Commands(
     }
 
     /// <summary>
-    /// Records from the microphone until silence or max duration, saves to a temp WAV file.
+    /// 無音または最大録音時間までマイクから録音し、一時WAVファイルに保存する。
     /// </summary>
     [Command("oneshot record")]
     public async Task OneshotRecordAsync(CancellationToken cancellationToken)
@@ -52,9 +52,9 @@ public sealed class Commands(
     }
 
     /// <summary>
-    /// Transcribes a WAV file to text using Whisper.
+    /// Whisper を使用してWAVファイルをテキストに書き起こす。
     /// </summary>
-    /// <param name="wavFile">Path to the WAV file to transcribe.</param>
+    /// <param name="wavFile">書き起こし対象のWAVファイルのパス。</param>
     [Command("oneshot transcribe")]
     public async Task OneshotTranscribeAsync([Argument] string wavFile, CancellationToken cancellationToken)
     {
@@ -63,9 +63,9 @@ public sealed class Commands(
     }
 
     /// <summary>
-    /// Sends text to OpenClaw and prints the response.
+    /// テキストをOpenClawに送信してレスポンスを表示する。
     /// </summary>
-    /// <param name="text">The text to send to OpenClaw.</param>
+    /// <param name="text">OpenClawに送信するテキスト。</param>
     [Command("oneshot ask")]
     public async Task OneshotAskAsync([Argument] string text, CancellationToken cancellationToken)
     {
@@ -74,7 +74,7 @@ public sealed class Commands(
     }
 
     /// <summary>
-    /// Full round-trip: records from mic → STT → OpenClaw → TTS → plays response.
+    /// フルラウンドトリップ：マイク録音 → STT → OpenClaw → TTS → 再生。
     /// </summary>
     [Command("oneshot roundtrip")]
     public async Task OneshotRoundtripAsync(CancellationToken cancellationToken)
@@ -83,7 +83,7 @@ public sealed class Commands(
     }
 
     /// <summary>
-    /// Tests wake word detection: waits for a wake word and prints a confirmation.
+    /// ウェイクワード検出のテスト：ウェイクワードを待機して確認メッセージを表示する。
     /// </summary>
     [Command("oneshot wake-test")]
     public async Task OneshotWakeTestAsync(CancellationToken cancellationToken)
@@ -94,9 +94,9 @@ public sealed class Commands(
     }
 
     /// <summary>
-    /// Synthesizes text to speech and plays it back.
+    /// テキストを音声合成して再生する。
     /// </summary>
-    /// <param name="text">The text to speak.</param>
+    /// <param name="text">読み上げるテキスト。</param>
     [Command("oneshot speak")]
     public async Task OneshotSpeakAsync([Argument] string text, CancellationToken cancellationToken)
     {

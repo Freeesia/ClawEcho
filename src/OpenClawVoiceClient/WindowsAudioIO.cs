@@ -7,8 +7,8 @@ using NAudio.Wave;
 namespace OpenClawVoiceClient;
 
 /// <summary>
-/// Handles audio recording and playback on Windows using WASAPI (shared mode) via NAudio.
-/// Recorded audio is resampled to 16 kHz / 16-bit / mono for Whisper compatibility.
+/// NAudio を使用して WASAPI（共有モード）で Windows の音声録音・再生を担当するクラス。
+/// 録音された音声は Whisper との互換性のため 16 kHz / 16-bit / モノラルにリサンプルされる。
 /// </summary>
 [SupportedOSPlatform("windows")]
 public sealed class WindowsAudioIO(IOptions<AppOptions> options, ILogger<WindowsAudioIO> logger) : IAudioIO
@@ -19,7 +19,7 @@ public sealed class WindowsAudioIO(IOptions<AppOptions> options, ILogger<Windows
     /// <inheritdoc />
     public async Task<string> RecordUntilSilenceAsync(CancellationToken ct = default)
     {
-        // Two temp files: raw capture (device native format) and final resampled file.
+        // 一時ファイルをで2つ使用：生キャプチャ（デバイスネイティブ形式）と最終リサンプル済みファイル。
         var tempRaw = Path.Combine(Path.GetTempPath(), $"openclaw_raw_{Guid.NewGuid():N}.wav");
         var tempFinal = Path.Combine(Path.GetTempPath(), $"openclaw_{Guid.NewGuid():N}.wav");
 
@@ -28,7 +28,7 @@ public sealed class WindowsAudioIO(IOptions<AppOptions> options, ILogger<Windows
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         cts.CancelAfter(TimeSpan.FromSeconds(_options.MaxRecordSeconds));
 
-        // Capture in device-native format (shared mode, default device).
+        // デバイスネイティブ形式でキャプチャする（共有モード、デフォルトデバイス）。
         using var capture = new WasapiCapture();
         using (var writer = new WaveFileWriter(tempRaw, capture.WaveFormat))
         {
@@ -52,12 +52,12 @@ public sealed class WindowsAudioIO(IOptions<AppOptions> options, ILogger<Windows
             finally
             {
                 capture.StopRecording();
-                // Wait for RecordingStopped so all DataAvailable events have flushed.
+                // DataAvailable イベントがすべてフラッシュされるよう RecordingStopped を待機する。
                 await recordingComplete.Task.ConfigureAwait(false);
             }
         }
 
-        // Resample raw capture → 16 kHz / 16-bit / mono (required by Whisper).
+        // 生キャプチャを 16 kHz / 16-bit / モノラルにリサンプルする（Whisper の要件）。
         var targetFormat = new WaveFormat(_options.SampleRate, 16, _options.Channels);
         using (var reader = new WaveFileReader(tempRaw))
         using (var resampler = new MediaFoundationResampler(reader, targetFormat) { ResamplerQuality = 60 })

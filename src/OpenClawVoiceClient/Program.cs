@@ -9,23 +9,23 @@ var app = ConsoleApp.Create();
 
 app.ConfigureDefaultConfiguration(config =>
 {
-    // Load appsettings.json and environment variable overrides
+    // appsettings.json と環境変数のオーバーライドを読み込む
     config.AddJsonFile("appsettings.json", optional: true);
     config.AddEnvironmentVariables("OPENCLAW_");
 });
 
 app.ConfigureServices((config, services) =>
 {
-    // Bind configuration to AppOptions
+    // 設定を AppOptions にバインドする
     services.Configure<AppOptions>(config.GetSection("App"));
 
-    // Systemd lifetime integration (context-aware: only activates when running as a systemd service)
+    // systemd ライフタイム統合（systemd サービスとして実行時のみ有効）
     services.AddSystemd();
 
-    // HTTP client for OpenClaw
+    // OpenClaw 用 HTTPクライアント
     services.AddHttpClient<OpenClawClient>();
 
-    // Application services
+    // アプリケーションサービス
 #if WINDOWS
     services.AddSingleton<IAudioIO, WindowsAudioIO>();
 #else

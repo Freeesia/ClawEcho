@@ -3,8 +3,8 @@ using Microsoft.Extensions.Logging;
 namespace OpenClawVoiceClient;
 
 /// <summary>
-/// Placeholder TTS client. Logs the text to synthesize and returns null.
-/// Replace this with a real implementation when a TTS service is available.
+/// プレースホルダー TTS クライアント。合成するテキストをログに記録して null を返す。
+/// TTSサービスが利用可能になったら実際の実装に差し替えること。
 /// </summary>
 public sealed class PlaceholderTtsClient(ILogger<PlaceholderTtsClient> logger) : ITtsClient
 {

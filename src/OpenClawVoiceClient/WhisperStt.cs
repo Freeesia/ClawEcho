@@ -6,7 +6,7 @@ using Whisper.net.Ggml;
 namespace OpenClawVoiceClient;
 
 /// <summary>
-/// Speech-to-text using Whisper.net.
+/// Whisper.net を使用した音声書き起こし（STT）。
 /// </summary>
 public sealed class WhisperStt(IOptions<AppOptions> options, ILogger<WhisperStt> logger) : IDisposable
 {
@@ -16,7 +16,7 @@ public sealed class WhisperStt(IOptions<AppOptions> options, ILogger<WhisperStt>
     private readonly SemaphoreSlim _initLock = new(1, 1);
 
     /// <summary>
-    /// Transcribes the given WAV file and returns the recognized text.
+    /// 指定されたWAVファイルを書き起こしてテキストを返す。
     /// </summary>
     public async Task<string> TranscribeAsync(string wavFile, CancellationToken ct = default)
     {

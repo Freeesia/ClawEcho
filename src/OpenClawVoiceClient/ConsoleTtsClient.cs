@@ -1,8 +1,8 @@
 namespace OpenClawVoiceClient;
 
 /// <summary>
-/// TTS implementation that writes the response text to standard output.
-/// Used for debugging: no audio synthesis is performed.
+/// 応答テキストを標準出力に書き出す TTS 実装。
+/// デバッグ用：音声合成は行わない。
 /// </summary>
 public sealed class ConsoleTtsClient : ITtsClient
 {

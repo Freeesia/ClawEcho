@@ -5,7 +5,7 @@ using Microsoft.Extensions.Options;
 namespace OpenClawVoiceClient;
 
 /// <summary>
-/// Handles audio recording and playback using arecord/aplay (ALSA).
+/// arecord/aplay (ALSA) を使用した音声録音・再生を担当するクラス。
 /// </summary>
 public sealed class AlsaAudioIO(IOptions<AppOptions> options, ILogger<AlsaAudioIO> logger) : IAudioIO
 {
@@ -13,8 +13,8 @@ public sealed class AlsaAudioIO(IOptions<AppOptions> options, ILogger<AlsaAudioI
     private readonly ILogger<AlsaAudioIO> _logger = logger;
 
     /// <summary>
-    /// Starts recording and stops after silence is detected or max duration is reached.
-    /// Returns the path to the temporary WAV file.
+    /// 無音検出または最大録音時間に達したら録音を停止する。
+    /// 一時WAVファイルのパスを返す。
     /// </summary>
     public async Task<string> RecordUntilSilenceAsync(CancellationToken ct = default)
     {
@@ -23,8 +23,8 @@ public sealed class AlsaAudioIO(IOptions<AppOptions> options, ILogger<AlsaAudioI
         _logger.LogInformation("Recording to {File} (max {Max}s, silence {Silence}ms)...",
             tempFile, _options.MaxRecordSeconds, _options.SilenceDurationMs);
 
-        // Record for up to MaxRecordSeconds. Silence detection is done post-recording
-        // by trimming the audio; for simplicity we use a fixed duration with arecord.
+        // MaxRecordSeconds まで録音する。無音検出は録音後に行う
+        // （簡便のため arecord では固定時間を使用）。
         var args = BuildArecordArgs(tempFile);
 
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
@@ -37,7 +37,7 @@ public sealed class AlsaAudioIO(IOptions<AppOptions> options, ILogger<AlsaAudioI
     }
 
     /// <summary>
-    /// Plays back a WAV file using aplay.
+    /// aplay を使用してWAVファイルを再生する。
     /// </summary>
     public async Task PlayAsync(string wavFile, CancellationToken ct = default)
     {

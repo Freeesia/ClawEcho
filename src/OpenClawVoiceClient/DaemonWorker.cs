@@ -4,8 +4,8 @@ using Microsoft.Extensions.Logging;
 namespace OpenClawVoiceClient;
 
 /// <summary>
-/// Background service for daemon mode.
-/// Waits for a wake word, then runs a VoiceSession, then repeats.
+/// デーモンモード用バックグラウンドサービス。
+/// ウェイクワードを待機し、VoiceSession を実行するループを繰り返す。
 /// </summary>
 public sealed class DaemonWorker(
     WakeWordDetector wakeWord,
@@ -32,13 +32,13 @@ public sealed class DaemonWorker(
             }
             catch (OperationCanceledException)
             {
-                // Shutdown requested
+                // シャットダウン要求
                 break;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during voice session. Restarting loop...");
-                // Brief pause before retry to avoid tight error loops
+                // タイトなエラーループを避けるため、リトライ前に短時間待機
                 await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken).ConfigureAwait(false);
             }
         }

@@ -3,8 +3,8 @@ using Microsoft.Extensions.Logging;
 namespace OpenClawVoiceClient;
 
 /// <summary>
-/// Orchestrates a single voice interaction: record → STT → OpenClaw → TTS → playback.
-/// This is the core of the application.
+/// 1回の音声対話を制御する：録音 → STT → OpenClaw → TTS → 再生。
+/// アプリケーションのコア処理。
 /// </summary>
 public sealed class VoiceSession(
     IAudioIO audio,
@@ -20,7 +20,7 @@ public sealed class VoiceSession(
     private readonly ILogger<VoiceSession> _logger = logger;
 
     /// <summary>
-    /// Runs a full voice round-trip: record from mic → transcribe → ask OpenClaw → synthesize → play.
+    /// フルラウンドトリップを実行する：マイク録音 → 書き起こし → OpenClaw問い合わせ → 音声合成 → 再生。
     /// </summary>
     public async Task RunFromMicAsync(CancellationToken ct = default)
     {

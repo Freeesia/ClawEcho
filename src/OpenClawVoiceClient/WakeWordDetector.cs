@@ -5,9 +5,9 @@ using Microsoft.Extensions.Options;
 namespace OpenClawVoiceClient;
 
 /// <summary>
-/// Waits for a wake word using an external wake word detection tool (e.g. openWakeWord via a subprocess).
-/// This is a simple implementation that invokes a Python-based wake word model.
-/// Replace or extend as needed.
+/// 外部ウェイクワード検出ツール（例：サブプロセス経由の openWakeWord）を使用してウェイクワードを待機する。
+/// Pythonベースのウェイクワードモデルを呼び出すシンプルな実装。
+/// 必要に応じて差し替えや拡張が可能。
 /// </summary>
 public sealed class WakeWordDetector(IOptions<AppOptions> options, ILogger<WakeWordDetector> logger)
 {
@@ -15,16 +15,16 @@ public sealed class WakeWordDetector(IOptions<AppOptions> options, ILogger<WakeW
     private readonly ILogger<WakeWordDetector> _logger = logger;
 
     /// <summary>
-    /// Waits until a wake word is detected, then returns.
-    /// Throws OperationCanceledException if ct is cancelled.
+    /// ウェイクワードが検出されるまで待機して戻る。
+    /// ct がキャンセルされた場合は OperationCanceledException をスローする。
     /// </summary>
     public async Task WaitForWakeWordAsync(CancellationToken ct = default)
     {
         _logger.LogInformation("Waiting for wake word (model: {Model}, threshold: {Threshold})...",
             _options.WakeWordModelPath, _options.WakeWordThreshold);
 
-        // Use a Python helper script or dedicated binary for wake word detection.
-        // The subprocess is expected to print "WAKE" to stdout when the wake word is detected.
+        // ウェイクワード検出にはPythonヘルパースクリプトまたは専用バイナリを使用する。
+        // ウェイクワード検出時にサブプロセスが標準出力に "WAKE" を出力することを期待する。
         var startInfo = new ProcessStartInfo
         {
             FileName = "python3",
@@ -52,7 +52,7 @@ public sealed class WakeWordDetector(IOptions<AppOptions> options, ILogger<WakeW
                 var line = await process.StandardOutput.ReadLineAsync(ct).ConfigureAwait(false);
                 if (line == null)
                 {
-                    // Process ended unexpectedly
+                    // プロセスが予期せず終了した
                     _logger.LogWarning("Wake word detector process exited unexpectedly.");
                     await Task.Delay(TimeSpan.FromSeconds(1), ct).ConfigureAwait(false);
                     return;
