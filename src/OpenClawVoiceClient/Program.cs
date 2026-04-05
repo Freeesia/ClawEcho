@@ -9,10 +9,16 @@ var app = ConsoleApp.Create();
 
 app.ConfigureDefaultConfiguration(config =>
 {
-    // appsettings.json と環境変数のオーバーライドを読み込む
-    config.AddJsonFile("appsettings.json", optional: true);
-    // ローカル設定（Git 管理外）で秘密情報を上書き可能
-    config.AddJsonFile("appsettings.Local.json", optional: true);
+    var userConfigDir = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        "claw-echo");
+
+    // ツール内蔵デフォルト設定
+    config.AddJsonFile(Path.Combine(AppContext.BaseDirectory, "appsettings.json"), optional: true);
+    // ユーザー設定（Linux: ~/.config/claw-echo/、Windows: %APPDATA%\claw-echo\）
+    config.AddJsonFile(Path.Combine(userConfigDir, "appsettings.json"), optional: true);
+    // ローカル秘密設定（Git 管理外）
+    config.AddJsonFile(Path.Combine(userConfigDir, "appsettings.Local.json"), optional: true);
     config.AddEnvironmentVariables("OPENCLAW_");
 });
 
@@ -46,5 +52,6 @@ app.ConfigureLogging((config, logging) =>
 });
 
 app.Add<Commands>();
+app.Add<SystemdCommands>();
 
 await app.RunAsync(args);

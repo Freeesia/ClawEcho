@@ -4,14 +4,14 @@
     <OutputType>Exe</OutputType>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-  </PropertyGroup>
-
-  <!-- Windows: net10.0-windows to pick up NAudio's net6.0-windows WASAPI assets -->
-  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
-    <TargetFramework>net10.0-windows</TargetFramework>
-  </PropertyGroup>
-  <PropertyGroup Condition="!$([MSBuild]::IsOSPlatform('Windows'))">
-    <TargetFramework>net10.0</TargetFramework>
+    <!-- Windows と Linux の両方をサポートするため multi-TFM を使用 -->
+    <TargetFrameworks>net10.0;net10.0-windows</TargetFrameworks>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>clawecho</ToolCommandName>
+    <PackageId>ClawEcho</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Freeesia</Authors>
+    <Description>OpenClaw スマートスピーカー音声クライアント（Raspberry Pi 向け半二重音声クライアント）</Description>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,7 +27,7 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0" />
-    <PackageReference Include="NAudio" Version="2.2.1" Condition="$([MSBuild]::IsOSPlatform('Windows'))" />
+    <PackageReference Include="NAudio" Version="2.2.1" Condition="'$(TargetFramework)' == 'net10.0-windows'" />
     <PackageReference Include="OpenAI" Version="2.10.0" />
     <PackageReference Include="Whisper.net" Version="1.7.4" />
     <PackageReference Include="Whisper.net.Runtime" Version="1.7.4" />

@@ -3,8 +3,8 @@
 * [ ] GitHub Actions
   * [ ] Build and test on pull request
   * [ ] Deploy to production on push to main branch
-* [ ] DotNet Tool でインストール可能にする
-  * [ ] インストール時にシステムサービスとして登録する
+* [x] DotNet Tool でインストール可能にする
+  * [x] インストール時にシステムサービスとして登録する
 * [ ] Windows 対応
   * [x] AudioIO をインターフェイス化して、arecord/aplay 以外の実装も可能にする
   * [x] NAudio を使用して Windows でのオーディオ入出力を実装
