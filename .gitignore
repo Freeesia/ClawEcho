@@ -1,0 +1,33 @@
+# .NET build artifacts
+bin/
+obj/
+
+# User-specific files
+*.user
+*.suo
+.vs/
+
+# NuGet packages
+*.nupkg
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+
+# Publish output
+[Pp]ublish/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Rider
+.idea/
+
+# VSCode
+.vscode/

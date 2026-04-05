@@ -1,0 +1,23 @@
+[Unit]
+Description=OpenClaw Voice Client (Daemon)
+After=network.target sound.target
+Wants=network.target
+
+[Service]
+Type=notify
+User=pi
+WorkingDirectory=/opt/openclaw-voice-client
+ExecStart=/opt/openclaw-voice-client/OpenClawVoiceClient daemon
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=30
+TimeoutStopSec=30
+
+# Environment overrides (alternative to appsettings.json)
+# Environment=OPENCLAW_App__OpenClawBaseUrl=http://localhost:8080
+# Environment=OPENCLAW_App__OpenClawBearerToken=your-token-here
+# Environment=OPENCLAW_App__WhisperModelPath=/opt/models/ggml-base.bin
+# Environment=OPENCLAW_App__WakeWordModelPath=/opt/models/hey_openclaw.onnx
+
+[Install]
+WantedBy=multi-user.target
