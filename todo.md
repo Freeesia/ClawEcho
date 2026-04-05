@@ -11,6 +11,7 @@
     * [x] マイクを共有モードで開いて、他のアプリケーションと同時に使用できるようにする
   * [ ] WakeWordDetector の `python3` コマンドを Windows に対応させる（OS に応じて `python` / `py` に切り替え）
   * [ ] Windows 用のビルドとテストを GitHub Actions に追加
+  * [ ] ユーザーの音声入力の終了を判定する
 * [x] launchSettings.json を追加して、VS Code から簡単にデバッグできるようにする
 * [x] ITtsClient の実装を追加する
   * [x] 検証用にコンソールに出力する PlaceholderTtsClient を実装
