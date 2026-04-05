@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "oneshot roundtrip": {
+      "commandName": "Project",
+      "commandLineArgs": "oneshot roundtrip"
+    },
+    "oneshot record": {
+      "commandName": "Project",
+      "commandLineArgs": "oneshot record"
+    },
+    "oneshot transcribe": {
+      "commandName": "Project",
+      "commandLineArgs": "oneshot transcribe /path/to/audio.wav"
+    },
+    "oneshot ask": {
+      "commandName": "Project",
+      "commandLineArgs": "oneshot ask \"こんにちは\""
+    },
+    "oneshot speak": {
+      "commandName": "Project",
+      "commandLineArgs": "oneshot speak \"こんにちは\""
+    }
+  }
+}

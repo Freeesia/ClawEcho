@@ -7,13 +7,13 @@ namespace OpenClawVoiceClient;
 /// This is the core of the application.
 /// </summary>
 public sealed class VoiceSession(
-    AudioIO audio,
+    IAudioIO audio,
     WhisperStt stt,
     OpenClawClient openClaw,
     ITtsClient tts,
     ILogger<VoiceSession> logger)
 {
-    private readonly AudioIO _audio = audio;
+    private readonly IAudioIO _audio = audio;
     private readonly WhisperStt _stt = stt;
     private readonly OpenClawClient _openClaw = openClaw;
     private readonly ITtsClient _tts = tts;

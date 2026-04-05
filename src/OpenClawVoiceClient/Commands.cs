@@ -11,7 +11,7 @@ namespace OpenClawVoiceClient;
 public sealed class Commands(
     DaemonWorker daemon,
     VoiceSession session,
-    AudioIO audio,
+    IAudioIO audio,
     WhisperStt stt,
     OpenClawClient openClaw,
     WakeWordDetector wakeWord,

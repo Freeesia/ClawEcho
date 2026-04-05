@@ -26,11 +26,15 @@ app.ConfigureServices((IConfiguration config, IServiceCollection services) =>
     services.AddHttpClient<OpenClawClient>();
 
     // Application services
-    services.AddSingleton<AudioIO>();
+#if WINDOWS
+    services.AddSingleton<IAudioIO, WindowsAudioIO>();
+#else
+    services.AddSingleton<IAudioIO, AlsaAudioIO>();
+#endif
     services.AddSingleton<WakeWordDetector>();
     services.AddSingleton<WhisperStt>();
     services.AddSingleton<OpenClawClient>();
-    services.AddSingleton<ITtsClient, PlaceholderTtsClient>();
+    services.AddSingleton<ITtsClient, ConsoleTtsClient>();
     services.AddSingleton<VoiceSession>();
     services.AddSingleton<DaemonWorker>();
 });
