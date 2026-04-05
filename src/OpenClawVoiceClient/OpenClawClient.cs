@@ -40,6 +40,7 @@ public sealed class OpenClawClient(IOptions<AppOptions> options, ILogger<OpenCla
         {
             Model = _options.OpenClawModel,
             PreviousResponseId = _previousResponseId,
+            EndUserId = string.IsNullOrEmpty(_options.SessionUser) ? null : _options.SessionUser,
         };
         requestOptions.InputItems.Add(ResponseItem.CreateUserMessageItem(userText));
 
