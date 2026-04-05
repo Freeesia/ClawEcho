@@ -19,4 +19,5 @@ public sealed class AppOptions
     public string WakeWordModelPath { get; set; } = "";
     public float WakeWordThreshold { get; set; } = 0.5f;
     public string? TtsEndpoint { get; set; }
+    public string OpenClawModel { get; set; } = "openclaw:main";
 }

@@ -1,3 +1,4 @@
+#if WINDOWS
 using System.Runtime.Versioning;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -91,3 +92,4 @@ public sealed class WindowsAudioIO(IOptions<AppOptions> options, ILogger<Windows
         _logger.LogInformation("Playback complete.");
     }
 }
+#endif

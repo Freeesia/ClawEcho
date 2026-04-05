@@ -11,6 +11,8 @@ app.ConfigureDefaultConfiguration(config =>
 {
     // appsettings.json と環境変数のオーバーライドを読み込む
     config.AddJsonFile("appsettings.json", optional: true);
+    // ローカル設定（Git 管理外）で秘密情報を上書き可能
+    config.AddJsonFile("appsettings.Local.json", optional: true);
     config.AddEnvironmentVariables("OPENCLAW_");
 });
 
@@ -21,9 +23,6 @@ app.ConfigureServices((config, services) =>
 
     // systemd ライフタイム統合（systemd サービスとして実行時のみ有効）
     services.AddSystemd();
-
-    // OpenClaw 用 HTTPクライアント
-    services.AddHttpClient<OpenClawClient>();
 
     // アプリケーションサービス
 #if WINDOWS
