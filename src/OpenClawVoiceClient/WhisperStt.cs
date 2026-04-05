@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Whisper.net;
+using Whisper.net.Ggml;
 
 namespace OpenClawVoiceClient;
 
@@ -51,17 +52,57 @@ public sealed class WhisperStt(IOptions<AppOptions> options, ILogger<WhisperStt>
             if (_factory != null)
                 return _factory;
 
-            if (string.IsNullOrWhiteSpace(_options.WhisperModelPath))
-                throw new InvalidOperationException("WhisperModelPath is not configured.");
+            var modelPath = ResolveModelPath();
+            await EnsureModelExistsAsync(modelPath, ct).ConfigureAwait(false);
 
-            _logger.LogInformation("Loading Whisper model from {Path}...", _options.WhisperModelPath);
-            _factory = WhisperFactory.FromPath(_options.WhisperModelPath);
+            _logger.LogInformation("Loading Whisper model from {Path}...", modelPath);
+            _factory = WhisperFactory.FromPath(modelPath);
             return _factory;
         }
         finally
         {
             _initLock.Release();
         }
+    }
+
+    private string ResolveModelPath()
+    {
+        if (!string.IsNullOrWhiteSpace(_options.WhisperModelPath))
+            return _options.WhisperModelPath;
+
+        var dir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "ClawEcho");
+        return Path.Combine(dir, $"ggml-{_options.WhisperModelType.ToString().ToLowerInvariant()}.bin");
+    }
+
+    private async Task EnsureModelExistsAsync(string modelPath, CancellationToken ct)
+    {
+        if (File.Exists(modelPath))
+            return;
+
+        var ggmlType = _options.WhisperModelType;
+        _logger.LogInformation("Whisper model not found at {Path}. Downloading {Type}...", modelPath, ggmlType);
+
+        var dir = Path.GetDirectoryName(modelPath)!;
+        Directory.CreateDirectory(dir);
+
+        var tmpPath = modelPath + ".tmp";
+        try
+        {
+            await using var modelStream = await WhisperGgmlDownloader
+                .GetGgmlModelAsync(ggmlType, QuantizationType.NoQuantization, ct).ConfigureAwait(false);
+            await using var fileStream = File.OpenWrite(tmpPath);
+            await modelStream.CopyToAsync(fileStream, ct).ConfigureAwait(false);
+        }
+        catch
+        {
+            try { File.Delete(tmpPath); } catch { }
+            throw;
+        }
+
+        File.Move(tmpPath, modelPath);
+        _logger.LogInformation("Whisper model downloaded to {Path}.", modelPath);
     }
 
     public void Dispose()

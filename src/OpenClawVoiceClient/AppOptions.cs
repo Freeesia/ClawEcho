@@ -1,3 +1,5 @@
+using Whisper.net.Ggml;
+
 namespace OpenClawVoiceClient;
 
 public sealed class AppOptions
@@ -12,6 +14,7 @@ public sealed class AppOptions
     public int SilenceDurationMs { get; set; } = 1200;
     public double SilenceThreshold { get; set; } = 0.01;
     public string WhisperModelPath { get; set; } = "";
+    public GgmlType WhisperModelType { get; set; } = GgmlType.Base;
     public string WhisperLanguage { get; set; } = "ja";
     public string WakeWordModelPath { get; set; } = "";
     public float WakeWordThreshold { get; set; } = 0.5f;
