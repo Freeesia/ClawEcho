@@ -2,27 +2,6 @@
 
 OpenClaw で会話するスマートスピーカーアプリ（Raspberry Pi 向け半二重音声クライアント）
 
-## 構成
-
-```
-src/
-  OpenClawVoiceClient/
-    Program.cs            # Host 構築・DI 登録・ConsoleAppFramework 起動
-    Commands.cs           # CLI コマンド定義（daemon / oneshot）
-    DaemonWorker.cs       # 常駐処理（wake word 待機 → VoiceSession ループ）
-    VoiceSession.cs       # 1 発話分の処理（録音→STT→OpenClaw→TTS→再生）
-    AudioIO.cs            # arecord / aplay による音声 I/O
-    WakeWordDetector.cs   # ウェイクワード検出
-    WhisperStt.cs         # Whisper.net による音声認識
-    OpenClawClient.cs     # OpenClaw /v1/responses 呼び出し
-    ITtsClient.cs         # TTS インターフェース
-    PlaceholderTtsClient.cs # TTS プレースホルダー実装
-    AppOptions.cs         # 設定クラス
-    appsettings.json      # 設定ファイルテンプレート
-deploy/
-  openclaw-voice-client.service  # systemd unit ファイル
-```
-
 ## 必要条件
 
 - .NET 10 Runtime
