@@ -6,27 +6,18 @@ namespace OpenClawVoiceClient;
 /// Orchestrates a single voice interaction: record → STT → OpenClaw → TTS → playback.
 /// This is the core of the application.
 /// </summary>
-public sealed class VoiceSession
+public sealed class VoiceSession(
+    AudioIO audio,
+    WhisperStt stt,
+    OpenClawClient openClaw,
+    ITtsClient tts,
+    ILogger<VoiceSession> logger)
 {
-    private readonly AudioIO _audio;
-    private readonly WhisperStt _stt;
-    private readonly OpenClawClient _openClaw;
-    private readonly ITtsClient _tts;
-    private readonly ILogger<VoiceSession> _logger;
-
-    public VoiceSession(
-        AudioIO audio,
-        WhisperStt stt,
-        OpenClawClient openClaw,
-        ITtsClient tts,
-        ILogger<VoiceSession> logger)
-    {
-        _audio = audio;
-        _stt = stt;
-        _openClaw = openClaw;
-        _tts = tts;
-        _logger = logger;
-    }
+    private readonly AudioIO _audio = audio;
+    private readonly WhisperStt _stt = stt;
+    private readonly OpenClawClient _openClaw = openClaw;
+    private readonly ITtsClient _tts = tts;
+    private readonly ILogger<VoiceSession> _logger = logger;
 
     /// <summary>
     /// Runs a full voice round-trip: record from mic → transcribe → ask OpenClaw → synthesize → play.

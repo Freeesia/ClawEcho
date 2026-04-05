@@ -7,18 +7,12 @@ namespace OpenClawVoiceClient;
 /// <summary>
 /// Speech-to-text using Whisper.net.
 /// </summary>
-public sealed class WhisperStt : IDisposable
+public sealed class WhisperStt(IOptions<AppOptions> options, ILogger<WhisperStt> logger) : IDisposable
 {
-    private readonly AppOptions _options;
-    private readonly ILogger<WhisperStt> _logger;
+    private readonly AppOptions _options = options.Value;
+    private readonly ILogger<WhisperStt> _logger = logger;
     private WhisperFactory? _factory;
     private readonly SemaphoreSlim _initLock = new(1, 1);
-
-    public WhisperStt(IOptions<AppOptions> options, ILogger<WhisperStt> logger)
-    {
-        _options = options.Value;
-        _logger = logger;
-    }
 
     /// <summary>
     /// Transcribes the given WAV file and returns the recognized text.

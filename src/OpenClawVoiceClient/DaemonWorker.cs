@@ -7,21 +7,14 @@ namespace OpenClawVoiceClient;
 /// Background service for daemon mode.
 /// Waits for a wake word, then runs a VoiceSession, then repeats.
 /// </summary>
-public sealed class DaemonWorker : BackgroundService
+public sealed class DaemonWorker(
+    WakeWordDetector wakeWord,
+    VoiceSession session,
+    ILogger<DaemonWorker> logger) : BackgroundService
 {
-    private readonly WakeWordDetector _wakeWord;
-    private readonly VoiceSession _session;
-    private readonly ILogger<DaemonWorker> _logger;
-
-    public DaemonWorker(
-        WakeWordDetector wakeWord,
-        VoiceSession session,
-        ILogger<DaemonWorker> logger)
-    {
-        _wakeWord = wakeWord;
-        _session = session;
-        _logger = logger;
-    }
+    private readonly WakeWordDetector _wakeWord = wakeWord;
+    private readonly VoiceSession _session = session;
+    private readonly ILogger<DaemonWorker> _logger = logger;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {

@@ -9,16 +9,10 @@ namespace OpenClawVoiceClient;
 /// This is a simple implementation that invokes a Python-based wake word model.
 /// Replace or extend as needed.
 /// </summary>
-public sealed class WakeWordDetector
+public sealed class WakeWordDetector(IOptions<AppOptions> options, ILogger<WakeWordDetector> logger)
 {
-    private readonly AppOptions _options;
-    private readonly ILogger<WakeWordDetector> _logger;
-
-    public WakeWordDetector(IOptions<AppOptions> options, ILogger<WakeWordDetector> logger)
-    {
-        _options = options.Value;
-        _logger = logger;
-    }
+    private readonly AppOptions _options = options.Value;
+    private readonly ILogger<WakeWordDetector> _logger = logger;
 
     /// <summary>
     /// Waits until a wake word is detected, then returns.

@@ -7,16 +7,10 @@ namespace OpenClawVoiceClient;
 /// <summary>
 /// Handles audio recording and playback using arecord/aplay (ALSA).
 /// </summary>
-public sealed class AudioIO
+public sealed class AudioIO(IOptions<AppOptions> options, ILogger<AudioIO> logger)
 {
-    private readonly AppOptions _options;
-    private readonly ILogger<AudioIO> _logger;
-
-    public AudioIO(IOptions<AppOptions> options, ILogger<AudioIO> logger)
-    {
-        _options = options.Value;
-        _logger = logger;
-    }
+    private readonly AppOptions _options = options.Value;
+    private readonly ILogger<AudioIO> _logger = logger;
 
     /// <summary>
     /// Starts recording and stops after silence is detected or max duration is reached.

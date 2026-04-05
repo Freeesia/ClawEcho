@@ -10,21 +10,14 @@ namespace OpenClawVoiceClient;
 /// <summary>
 /// Client for OpenClaw's /v1/responses endpoint.
 /// </summary>
-public sealed class OpenClawClient
+public sealed class OpenClawClient(HttpClient http, IOptions<AppOptions> options, ILogger<OpenClawClient> logger)
 {
-    private readonly HttpClient _http;
-    private readonly AppOptions _options;
-    private readonly ILogger<OpenClawClient> _logger;
+    private readonly HttpClient _http = http;
+    private readonly AppOptions _options = options.Value;
+    private readonly ILogger<OpenClawClient> _logger = logger;
 
     // Simple conversation history stored as a list of messages
     private readonly List<RequestMessage> _history = [];
-
-    public OpenClawClient(HttpClient http, IOptions<AppOptions> options, ILogger<OpenClawClient> logger)
-    {
-        _http = http;
-        _options = options.Value;
-        _logger = logger;
-    }
 
     /// <summary>
     /// Sends the user's text to OpenClaw and returns the assistant's response text.
@@ -81,18 +74,13 @@ internal sealed record RequestMessage(
     [property: JsonPropertyName("role")] string Role,
     [property: JsonPropertyName("content")] string Content);
 
-internal sealed class ResponsesRequest
+internal sealed class ResponsesRequest(IReadOnlyList<RequestMessage> input)
 {
     [JsonPropertyName("model")]
     public string Model { get; set; } = "gpt-4o-mini";
 
     [JsonPropertyName("input")]
-    public IReadOnlyList<RequestMessage> Input { get; }
-
-    public ResponsesRequest(IReadOnlyList<RequestMessage> input)
-    {
-        Input = input;
-    }
+    public IReadOnlyList<RequestMessage> Input { get; } = input;
 }
 
 internal sealed class ResponsesResponse
