@@ -14,7 +14,7 @@ app.ConfigureDefaultConfiguration(config =>
     config.AddEnvironmentVariables("OPENCLAW_");
 });
 
-app.ConfigureServices((IConfiguration config, IServiceCollection services) =>
+app.ConfigureServices((config, services) =>
 {
     // Bind configuration to AppOptions
     services.Configure<AppOptions>(config.GetSection("App"));
@@ -39,7 +39,7 @@ app.ConfigureServices((IConfiguration config, IServiceCollection services) =>
     services.AddSingleton<DaemonWorker>();
 });
 
-app.ConfigureLogging((IConfiguration config, ILoggingBuilder logging) =>
+app.ConfigureLogging((config, logging) =>
 {
     logging.ClearProviders();
     logging.AddConsole();
