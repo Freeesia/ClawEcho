@@ -33,11 +33,10 @@ app.ConfigureServices((config, services) =>
     // アプリケーションサービス
 #if WINDOWS
     services.AddSingleton<IAudioIO, WindowsAudioIO>();
-    services.AddSingleton<IWakeWordDetector, WindowsWakeWordDetector>();
 #else
     services.AddSingleton<IAudioIO, AlsaAudioIO>();
-    services.AddSingleton<IWakeWordDetector, WakeWordDetector>();
 #endif
+    services.AddSingleton<IWakeWordDetector, WakeWordDetector>();
     services.AddSingleton<WhisperStt>();
     services.AddSingleton<OpenClawClient>();
     services.AddSingleton<ITtsClient, ConsoleTtsClient>();
