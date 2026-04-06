@@ -6,10 +6,9 @@ namespace OpenClawVoiceClient;
 
 /// <summary>
 /// 外部ウェイクワード検出ツール（例：サブプロセス経由の openWakeWord）を使用してウェイクワードを待機する。
-/// Pythonベースのウェイクワードモデルを呼び出すシンプルな実装。
-/// 必要に応じて差し替えや拡張が可能。
+/// Pythonベースのウェイクワードモデルを呼び出すシンプルな実装。Linux 向け。
 /// </summary>
-public sealed class WakeWordDetector(IOptions<AppOptions> options, ILogger<WakeWordDetector> logger)
+public sealed class WakeWordDetector(IOptions<AppOptions> options, ILogger<WakeWordDetector> logger) : IWakeWordDetector
 {
     private readonly AppOptions _options = options.Value;
     private readonly ILogger<WakeWordDetector> _logger = logger;

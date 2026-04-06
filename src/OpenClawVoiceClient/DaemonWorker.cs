@@ -8,11 +8,11 @@ namespace OpenClawVoiceClient;
 /// ウェイクワードを待機し、VoiceSession を実行するループを繰り返す。
 /// </summary>
 public sealed class DaemonWorker(
-    WakeWordDetector wakeWord,
+    IWakeWordDetector wakeWord,
     VoiceSession session,
     ILogger<DaemonWorker> logger) : BackgroundService
 {
-    private readonly WakeWordDetector _wakeWord = wakeWord;
+    private readonly IWakeWordDetector _wakeWord = wakeWord;
     private readonly VoiceSession _session = session;
     private readonly ILogger<DaemonWorker> _logger = logger;
 
