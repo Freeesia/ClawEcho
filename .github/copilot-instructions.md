@@ -1,69 +1,134 @@
 # ClawEcho プロジェクトガイドライン
 
-Raspberry Pi 向け半二重音声クライアント。ウェイクワード検出 → 録音 → STT → OpenClaw API → TTS → 再生のサイクルを実行する。詳細は [README.md](../README.md) および [dev.md](../dev.md) を参照。
+ClawEcho は OpenClaw と会話する半二重音声クライアントです。主用途は Raspberry Pi / Linux 上の常駐スマートスピーカーですが、Windows でも録音・再生の検証ができるように multi-TFM で構成しています。
+
+詳細な利用手順は [README.md](../README.md)、設計背景は [dev.md](../dev.md)、残タスクは [todo.md](../todo.md) を参照してください。
+
+## 現在の実装状態
+
+- CLI は ConsoleAppFramework v5
+- ターゲットは `net10.0` と `net10.0-windows`
+- Linux 音声 I/O は `arecord` / `aplay`
+- Windows 音声 I/O は NAudio / WASAPI 共有モード
+- STT は Whisper.net
+- OpenClaw 連携は OpenAI SDK の Responses API
+- Wake word は `python3 -m openwakeword` サブプロセス
+- TTS はまだ実音声合成なし
+  - DI 登録は `ITtsClient -> ConsoleTtsClient`
+  - 応答テキストを標準出力に表示し、音声ファイルは返さない
 
 ## アーキテクチャ
 
-4つの塊のみ。意図的に最小構成。
+意図的に小さい構成を維持します。新しい層や抽象を追加する前に、既存の塊に収まるかを確認してください。
 
-| 塊 | ファイル | 役割 |
-|----|---------|------|
-| CLI 入口 | `Commands.cs` | `daemon` / `oneshot *` サブコマンド定義 |
-| 常駐処理 | `DaemonWorker.cs` | ウェイクワード待機 → VoiceSession ループ |
-| 1会話処理 | `VoiceSession.cs` | アプリの中心。録音→STT→OpenClaw→TTS→再生の1サイクル |
-| 外部接続 | `AudioIO.cs`, `WakeWordDetector.cs`, `WhisperStt.cs`, `OpenClawClient.cs` | 各コンポーネント |
+| 塊 | 主なファイル | 役割 |
+|----|-------------|------|
+| 起動・DI | `Program.cs` | 設定、DI、ログ、ConsoleAppFramework 起動 |
+| CLI | `Commands.cs`, `SystemdCommands.cs` | `daemon` / `oneshot *` / `install` / `uninstall` |
+| 常駐処理 | `DaemonWorker.cs` | ウェイクワード待機 -> `VoiceSession` 実行のループ |
+| 1 会話処理 | `VoiceSession.cs` | 録音 -> STT -> OpenClaw -> TTS -> 再生 |
+| 音声 I/O | `IAudioIO.cs`, `AudioIO.cs`, `WindowsAudioIO.cs` | Linux / Windows の録音・再生 |
+| 外部接続 | `WakeWordDetector.cs`, `WhisperStt.cs`, `OpenClawClient.cs` | Wake word、STT、OpenClaw API |
+| TTS | `ITtsClient.cs`, `ConsoleTtsClient.cs`, `PlaceholderTtsClient.cs` | TTS 差し替え口と現状のデバッグ出力 |
+| 設定 | `AppOptions.cs`, `appsettings.json` | アプリ設定 |
 
-設定クラスは `AppOptions.cs` に一元化（分割しない）。
+## 設計方針
+
+- **抽象化は最小限**にする
+  - 現状の明示的な差し替え口は `IAudioIO` と `ITtsClient`
+  - `IWakeWordDetector`、`ISttEngine`、`IOpenClawClient` などは、必要になるまで追加しない
+- `daemon` と `oneshot` は入口だけを分ける
+  - 1 会話の本体は `VoiceSession` に集約する
+- 設定は `AppOptions.cs` に集約する
+  - 小さな Options 型へ先回りして分割しない
+- 外部プロセス起動の共通化は急がない
+  - 同じ複雑さが複数箇所に出てから考える
+- テストや実装上の必要がない helper / wrapper は増やさない
 
 ## ビルドと実行
 
 ```bash
-dotnet build
-dotnet run -- daemon
-dotnet run -- oneshot roundtrip
+dotnet build src/ClawEcho.sln
+dotnet run --project src/OpenClawVoiceClient -- daemon
+dotnet run --project src/OpenClawVoiceClient -- oneshot roundtrip
 ```
 
-コマンド一覧は README.md 参照。
+dotnet tool としてインストール済みの場合:
 
-## 設計方針
+```bash
+clawecho daemon
+clawecho oneshot ask "こんにちは"
+```
 
-- **抽象化は最小限**：インターフェースは差し替えが確定しているものだけ（現状 `ITtsClient` のみ）。`IAudioRecorder`・`IWakeWordDetector` 等は作らない
-- **拡張性より追いやすさ**：まず動くこと・デバッグしやすいことを優先
-- `daemon` と `oneshot` は**入口の違いだけ**。処理本体（VoiceSession）は共通
+## 設定読み込み
 
-## 落とし穴・注意事項
+`Program.cs` では以下の順に設定を読みます。後勝ちです。
 
-### ConsoleAppFramework v5 の API 署名
-標準の Generic Host API とは異なる。以下の署名を使うこと：
+1. `AppContext.BaseDirectory/appsettings.json`
+2. ユーザー設定ディレクトリの `appsettings.json`
+3. ユーザー設定ディレクトリの `appsettings.Local.json`
+4. `OPENCLAW_` プレフィックスの環境変数
+
+ユーザー設定ディレクトリ:
+
+- Linux: `~/.config/claw-echo/`
+- Windows: `%APPDATA%\claw-echo\`
+
+環境変数は `OPENCLAW_App__OpenClawBaseUrl=http://...` の形式です。
+
+## 注意事項
+
+### ConsoleAppFramework v5
+
+標準の Generic Host API と同じ感覚で書かないこと。既存の `Program.cs` と同じ形に合わせます。
 
 ```csharp
-// ConfigureServices — IConfiguration が第1引数
-app.ConfigureServices((IConfiguration config, IServiceCollection services) => { ... });
-
-// ConfigureDefaultConfiguration
-app.ConfigureDefaultConfiguration((IConfigurationBuilder config) => { ... });
-
-// ConfigureLogging
-app.ConfigureLogging((IConfiguration config, ILoggingBuilder logging) => { ... });
+app.ConfigureDefaultConfiguration(config => { ... });
+app.ConfigureServices((config, services) => { ... });
+app.ConfigureLogging((config, logging) => { ... });
 ```
 
-### プラットフォーム依存
-- `AudioIO.cs` は `arecord` / `aplay`（ALSA）に依存。**Linux/Raspberry Pi 専用**。Windows では動かない
-- `WakeWordDetector.cs` は `python3 -m openwakeword` を子プロセスとして起動。Python + openWakeWord のインストールが必須
+### 録音終了判定
 
-### 未実装コンポーネント
-- **TTS**：`PlaceholderTtsClient` は何もしない。`TtsEndpoint` を設定しても現状は無効
-- **無音検出**：`SilenceThreshold` は設定にあるが実装未完。録音は `MaxRecordSeconds` でタイムアウト
+`IAudioIO.RecordUntilSilenceAsync` という名前ですが、現状は実際の無音検出ではありません。
 
-### Whisper モデル
-- `WhisperModelPath` に ggml 形式モデルファイルのパスを指定。初回呼び出し時にモデルロード遅延あり
-- `WhisperStt` は `SemaphoreSlim` でスレッドセーフ初期化を保護
+- Linux: `arecord` を `MaxRecordSeconds` でキャンセル
+- Windows: WASAPI 録音を `MaxRecordSeconds` で停止し、Whisper 用にリサンプル
+- `SilenceThreshold` と `SilenceDurationMs` はまだ実装に使われていません
+
+この挙動を説明するドキュメントや TODO では、無音検出済みと書かないでください。
+
+### Wake word
+
+`WakeWordDetector` は現在 `python3 -m openwakeword` 固定です。
+
+- 標準出力に `WAKE` を含む行が出たら検出扱い
+- Windows 向けの `python` / `py` 切り替えは未実装
+- モデルパスやデバイス名に空白がある場合の引数安全性も未整理
+
+### TTS
+
+実際の音声合成は未実装です。
+
+- `ConsoleTtsClient` は応答テキストを `Console.WriteLine` して `null` を返す
+- `TtsEndpoint` は設定に存在するが、現状は使われていない
+- `oneshot speak` と `roundtrip` は音声再生まで進まない
 
 ### OpenClaw API
-- エンドポイント：`POST /v1/responses`
-- JSON シリアライズはソースジェネレーター（`OpenClawJsonContext`）を使用。型を追加する際は属性登録が必要
-- 会話履歴はメモリ保持。`ClearHistory()` でリセット
 
-## 環境変数
+- `OpenClawClient` は OpenAI SDK の `ResponsesClient` を使う
+- `OpenClawBaseUrl` を SDK の `Endpoint` として指定する
+- `OpenClawBearerToken` を API key credential として使う
+- `PreviousResponseId` をメモリに保持して会話を継続する
+- `ClearHistory()` でセッションをリセットする
 
-`OPENCLAW_App__<プロパティ名>` の形式で appsettings.json を上書き可能。例：`OPENCLAW_App__OpenClawBaseUrl=http://...`
+### systemd
+
+Linux の systemd 登録は `SystemdCommands.cs` の `install` / `uninstall` で行います。
+
+- `sudo clawecho install`
+- `sudo clawecho uninstall`
+- サービス名は `claw-echo.service`
+- サービスファイルは `/etc/systemd/system/claw-echo.service`
+
+古い `deploy/*.service` 前提の手順を復活させないでください。
