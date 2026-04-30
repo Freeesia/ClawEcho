@@ -14,7 +14,7 @@ public sealed class Commands(
     IAudioIO audio,
     WhisperStt stt,
     OpenClawClient openClaw,
-    WakeWordDetector wakeWord,
+    IWakeWordDetector wakeWord,
     ITtsClient tts,
     ILogger<Commands> logger)
 {

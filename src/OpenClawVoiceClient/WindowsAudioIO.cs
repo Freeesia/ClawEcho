@@ -10,6 +10,7 @@ namespace OpenClawVoiceClient;
 /// <summary>
 /// NAudio を使用して WASAPI（共有モード）で Windows の音声録音・再生を担当するクラス。
 /// 録音された音声は Whisper との互換性のため 16 kHz / 16-bit / モノラルにリサンプルされる。
+/// RMS ベースの無音検出により、ユーザーが発話を終了したタイミングで録音を自動停止する。
 /// </summary>
 [SupportedOSPlatform("windows")]
 public sealed class WindowsAudioIO(IOptions<AppOptions> options, ILogger<WindowsAudioIO> logger) : IAudioIO
@@ -35,10 +36,37 @@ public sealed class WindowsAudioIO(IOptions<AppOptions> options, ILogger<Windows
         {
             var recordingComplete = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
+            // RMS 無音検出用の状態変数
+            // DataAvailable イベントは NAudio の内部キャプチャスレッドから直列に呼び出されるため、
+            // これらの変数へのアクセスは DataAvailable コールバック内のみに限定する。
+            bool hasSpeechStarted = false;
+            var silenceStopwatch = new System.Diagnostics.Stopwatch();
+            var silenceThreshold = (float)_options.SilenceThreshold;
+            var silenceDurationMs = _options.SilenceDurationMs;
+
             capture.DataAvailable += (_, e) =>
             {
-                if (e.BytesRecorded > 0)
-                    writer.Write(e.Buffer, 0, e.BytesRecorded);
+                if (e.BytesRecorded <= 0) return;
+
+                writer.Write(e.Buffer, 0, e.BytesRecorded);
+
+                // RMS を計算して発話終了を検出する
+                var rms = CalculateRms(e.Buffer, e.BytesRecorded, capture.WaveFormat);
+                if (rms >= silenceThreshold)
+                {
+                    // 音声検出：無音タイマーをリセット
+                    hasSpeechStarted = true;
+                    silenceStopwatch.Reset();
+                }
+                else if (hasSpeechStarted)
+                {
+                    // 発話開始後の無音区間を計測する
+                    if (!silenceStopwatch.IsRunning)
+                        silenceStopwatch.Start();
+
+                    if (silenceStopwatch.ElapsedMilliseconds >= silenceDurationMs)
+                        cts.Cancel(); // 無音が十分続いたので録音を終了する
+                }
             };
 
             capture.RecordingStopped += (_, _) => recordingComplete.TrySetResult();
@@ -91,5 +119,41 @@ public sealed class WindowsAudioIO(IOptions<AppOptions> options, ILogger<Windows
 
         _logger.LogInformation("Playback complete.");
     }
+
+    /// <summary>
+    /// PCM バッファの RMS（二乗平均平方根）振幅を計算する。
+    /// 無音検出のしきい値との比較に使用する。
+    /// </summary>
+    private static float CalculateRms(byte[] buffer, int bytesRecorded, WaveFormat format)
+    {
+        double sum = 0;
+        int count = 0;
+
+        if (format.BitsPerSample == 32)
+        {
+            // 32-bit float（WASAPI 共有モードの一般的な形式）
+            int floatCount = bytesRecorded / 4;
+            for (int i = 0; i < floatCount; i++)
+            {
+                float sample = BitConverter.ToSingle(buffer, i * 4);
+                sum += sample * sample;
+                count++;
+            }
+        }
+        else if (format.BitsPerSample == 16)
+        {
+            // 16-bit PCM
+            int sampleCount = bytesRecorded / 2;
+            for (int i = 0; i < sampleCount; i++)
+            {
+                float sample = BitConverter.ToInt16(buffer, i * 2) / 32768f;
+                sum += sample * sample;
+                count++;
+            }
+        }
+
+        return count > 0 ? (float)Math.Sqrt(sum / count) : 0f;
+    }
 }
 #endif
+

@@ -1,25 +1,30 @@
-using System.Diagnostics;
+#if WINDOWS
+using System.Runtime.Versioning;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using NAudio.Wave;
 using NanoWakeWord;
 
 namespace OpenClawVoiceClient;
 
 /// <summary>
-/// arecord サブプロセスで RAW PCM をキャプチャして NanoWakeWord に渡す、Linux 向けウェイクワード検出クラス。
+/// NAudio（WaveInEvent）と NanoWakeWord を使用して Windows でウェイクワードを検出するクラス。
+/// WaveInEvent は 16 kHz / 16-bit / モノラルを直接要求でき、ドライバが共有アクセスとリサンプリングを担当する。
 /// </summary>
-public sealed class WakeWordDetector(IOptions<AppOptions> options, ILogger<WakeWordDetector> logger) : IWakeWordDetector
+[SupportedOSPlatform("windows")]
+public sealed class WindowsWakeWordDetector(IOptions<AppOptions> options, ILogger<WindowsWakeWordDetector> logger)
+    : IWakeWordDetector
 {
     private readonly AppOptions _options = options.Value;
-    private readonly ILogger<WakeWordDetector> _logger = logger;
+    private readonly ILogger<WindowsWakeWordDetector> _logger = logger;
 
     // NanoWakeWord が期待する形式: 16 kHz / 16-bit / モノラル PCM
     private const int SampleRate = 16000;
+    private const int BitsPerSample = 16;
     private const int Channels = 1;
 
-    // NanoWakeWord の内部チャンクサイズ (1280 サンプル × 2 バイト = 2560 バイト)
-    private const int ChunkSamples = 1280;
-    private const int ChunkBytes = ChunkSamples * 2;
+    // NanoWakeWord の内部チャンクサイズ（1280 サンプル）の整数倍に合わせたバッファサイズ
+    private const int BufferMilliseconds = 80; // 1280 samples at 16 kHz
 
     // NanoWakeWord の初期化（作業ディレクトリ変更 + ファイルコピー）をプロセス内でシリアライズするためのロック
     private static readonly Lock RuntimeInitLock = new();
@@ -60,61 +65,39 @@ public sealed class WakeWordDetector(IOptions<AppOptions> options, ILogger<WakeW
 
         using (runtime)
         {
-            // arecord で 16 kHz / 16-bit / モノラルの RAW PCM を標準出力に出力させ、
-            // NanoWakeWord のチャンクサイズ（1280 サンプル）単位で読み込む。
-            var startInfo = new ProcessStartInfo
+            var detectionTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+            using var waveIn = new WaveInEvent
             {
-                FileName = "arecord",
-                Arguments = $"-D {_options.InputDevice} -f S16_LE -r {SampleRate} -c {Channels} -t raw",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
+                WaveFormat = new WaveFormat(SampleRate, BitsPerSample, Channels),
+                BufferMilliseconds = BufferMilliseconds
             };
 
-            using var process = new Process { StartInfo = startInfo };
-            process.ErrorDataReceived += (_, e) =>
+            waveIn.DataAvailable += (_, e) =>
             {
-                if (!string.IsNullOrEmpty(e.Data))
-                    _logger.LogDebug("[wakeword] {Line}", e.Data);
+                if (e.BytesRecorded <= 0 || detectionTcs.Task.IsCompleted)
+                    return;
+
+                // byte[] → short[] に変換して NanoWakeWord に渡す
+                var samples = new short[e.BytesRecorded / 2];
+                Buffer.BlockCopy(e.Buffer, 0, samples, 0, e.BytesRecorded);
+
+                if (runtime.Process(samples) >= 0)
+                {
+                    _logger.LogInformation("Wake word detected.");
+                    detectionTcs.TrySetResult();
+                }
             };
 
-            process.Start();
-            process.BeginErrorReadLine();
-
-            var buffer = new byte[ChunkBytes];
-            var samples = new short[ChunkSamples];
-
+            waveIn.StartRecording();
             try
             {
-                using var stream = process.StandardOutput.BaseStream;
-                while (!ct.IsCancellationRequested)
-                {
-                    // ストリームから正確に ChunkBytes バイト読み込む
-                    int totalRead = 0;
-                    while (totalRead < ChunkBytes)
-                    {
-                        int bytesRead = await stream.ReadAsync(
-                            buffer.AsMemory(totalRead, ChunkBytes - totalRead), ct).ConfigureAwait(false);
-                        if (bytesRead == 0)
-                        {
-                            _logger.LogWarning("arecord process ended unexpectedly.");
-                            return;
-                        }
-                        totalRead += bytesRead;
-                    }
-
-                    Buffer.BlockCopy(buffer, 0, samples, 0, ChunkBytes);
-                    if (runtime.Process(samples) >= 0)
-                    {
-                        _logger.LogInformation("Wake word detected.");
-                        return;
-                    }
-                }
+                using var cancelReg = ct.Register(() => detectionTcs.TrySetCanceled(ct));
+                await detectionTcs.Task.ConfigureAwait(false);
             }
             finally
             {
-                if (!process.HasExited)
-                    process.Kill();
+                waveIn.StopRecording();
             }
         }
     }
@@ -151,3 +134,4 @@ public sealed class WakeWordDetector(IOptions<AppOptions> options, ILogger<WakeW
         return modelName;
     }
 }
+#endif
